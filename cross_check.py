@@ -66,8 +66,7 @@ class CrossCheck(gl.Contract):
     def _fetch_page_text(self, url: str) -> str:
         # Runs inside the non-deterministic block: the leader fetches the
         # page, and each validator fetches it again independently.
-        response = gl.nondet.web.get(url)
-        return str(response)[:6000]
+        return str(gl.nondet.web.render(url, mode="text"))[:6000]
 
     def _judge_both_sources(self, claim: str, url_a: str, url_b: str) -> tuple:
         def run_judgement() -> str:
@@ -92,12 +91,12 @@ It is mandatory that you respond only using the JSON format above,
 nothing else. Your output must be only JSON without any formatting
 prefix or suffix, perfectly parsable by a JSON parser.
                 """
-                result = gl.exec_prompt(task).replace("```json", "").replace("```", "")
+                result = gl.nondet.exec_prompt(task).replace("```json", "").replace("```", "")
                 parsed = json.loads(result)
                 results[key] = bool(parsed.get("supported", False))
             return json.dumps(results, sort_keys=True)
 
-        verdict = json.loads(gl.eq_principle_strict_eq(run_judgement))
+        verdict = json.loads(gl.eq_principle.strict_eq(run_judgement))
         return bool(verdict.get("a", False)), bool(verdict.get("b", False))
 
     # ------------------------------------------------------------------
